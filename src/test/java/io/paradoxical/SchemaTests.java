@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaTests {
     @Test
-    public void test_simple_difference() throws IOException {
+    public void wrong_type_simple() throws IOException {
         final JsonValue left = get("wrong_type_simple/left.json");
 
         final JsonValue right = get("wrong_type_simple/right.json");
@@ -30,7 +30,37 @@ public class SchemaTests {
     }
 
     @Test
-    public void test_complex_difference() throws IOException {
+    public void left_hand_missing_properties_ok() throws IOException {
+        final JsonValue left = get("left_hand_missing_properties/left.json");
+
+        final JsonValue right = get("left_hand_missing_properties/right.json");
+
+        final List<Difference> differences = new SchemaComparer(left, right).differences();
+
+        differences.forEach(System.out::println);
+
+        assertThat(differences).isEmpty();
+    }
+
+    @Test
+    public void left_hand_missing_properties_fail() throws IOException {
+        final JsonValue left = get("left_hand_missing_properties/left.json");
+
+        final JsonValue right = get("left_hand_missing_properties/right.json");
+
+        final SchemaCompareOptions schemaCompareOptions = new SchemaCompareOptions();
+
+        schemaCompareOptions.setFailIfMasterIsMissingProperties(true);
+
+        final List<Difference> differences = new SchemaComparer(left, right, schemaCompareOptions).differences();
+
+        differences.forEach(System.out::println);
+
+        assertThat(differences).isNotEmpty();
+    }
+
+    @Test
+    public void complex_array_diff() throws IOException {
         final JsonValue left = get("complex_array_diff/left.json");
 
         final JsonValue right = get("complex_array_diff/right.json");

@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 enum DifferenceType {
     Missing,
@@ -55,6 +56,8 @@ class SchemaCompareOptions {
     private Boolean failOnMisMatchedArrayLengths = false;
 
     private Boolean failOnMissingObject = false;
+
+    private Boolean failIfMasterIsMissingProperties = false;
 }
 
 @Data
@@ -159,6 +162,18 @@ public class SchemaComparer {
 
         for (final String fieldName : leftElements) {
             differences.addAll(compareFields(leftNode, rightNode, fieldName));
+        }
+
+        if (options.getFailIfMasterIsMissingProperties()) {
+            final List<String> leftHandSideMissing =
+                    rightElements.stream()
+                                 .filter(i -> !leftElements.contains(i))
+                                 .collect(Collectors.toList());
+
+            differences.addAll(
+                    leftHandSideMissing.stream()
+                                       .map(missing -> new Difference(missing, "", path.resolve(), DifferenceType.Missing, missing, "none"))
+                                       .collect(Collectors.toList()));
         }
 
         return differences;
