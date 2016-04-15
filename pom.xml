@@ -9,7 +9,7 @@
 
     <groupId>io.paradoxical</groupId>
     <artifactId>json-schema-diff</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
     <description>json-schema-diff</description>
 
@@ -44,7 +44,7 @@
         <url>http://github.com:paradoxical-io/json-schema-diff</url>
         <connection>scm:git:git@github.com:paradoxical-io/json-schema-diff.git</connection>
         <developerConnection>scm:git:git@github.com:paradoxical-io/json-schema-diff.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>json-schema-diff-1.0</tag>
     </scm>
 
     <developers>
