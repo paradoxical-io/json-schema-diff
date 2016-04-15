@@ -5,60 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.google.common.collect.Lists;
 import lombok.Data;
-import lombok.Value;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
 import java.util.stream.Collectors;
-
-enum DifferenceType {
-    Missing,
-    WrongType
-}
-
-@Value
-class Difference {
-    String fieldName;
-    String fieldValue;
-    String path;
-    DifferenceType reason;
-    String expected;
-    String found;
-}
-
-class Path {
-    private Stack<String> stack = new Stack<>();
-
-    void push(JsonNode parent) {
-        push(parent.asText());
-    }
-
-    void push(String parent) {
-        stack.push(parent);
-    }
-
-
-    void pop() {
-        stack.pop();
-    }
-
-    String resolve() {
-        return String.join(".", stack);
-    }
-}
-
-@Data
-class SchemaCompareOptions {
-    private Boolean failOnMisMatchedArrayLengths = false;
-
-    private Boolean failOnMissingObject = false;
-
-    private Boolean failIfMasterIsMissingProperties = false;
-}
 
 @Data
 public class SchemaComparer {
