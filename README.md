@@ -20,7 +20,7 @@ from an external provider.
 <dependency>
     <groupId>io.paradoxical</groupId>
     <artifactId>json-schema-diff</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1</version>
 </dependency>
 ```
 
