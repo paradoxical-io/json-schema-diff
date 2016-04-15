@@ -145,9 +145,8 @@
                      http://stackoverflow.com/questions/15253173/how-safe-is-it-to-use-xx-usesplitverifier -->
                     <argLine>-XX:-UseSplitVerifier</argLine>
                     <includes>
-                        <include>%regex[.*]</include>
+                        <include>**/*.java</include>
                     </includes>
-                    <excludes>%regex[.*.json]</excludes>
                 </configuration>
             </plugin>
             <plugin>
