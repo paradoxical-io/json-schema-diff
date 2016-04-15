@@ -51,4 +51,4 @@ Difference(
 One thing to note is that arrays are tricky and interesting.  For EACH array element in the master,
 the comparer will compare against EACH element in the same array in the target. This is because array objects
  frequently do not come back with all the same fields, so the master json should represent all the fields you
- care about.  A NULL member in the compared will be ignored, since its type cannot be determined.  
+ care about.  A NULL member in the compared will be ignored, since its type cannot be determined.
