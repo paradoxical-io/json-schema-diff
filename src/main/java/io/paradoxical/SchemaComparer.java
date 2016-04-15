@@ -2,6 +2,7 @@ package io.paradoxical;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.Value;
@@ -50,23 +51,37 @@ class Path {
 }
 
 @Data
+class SchemaCompareOptions {
+    private Boolean failOnMisMatchedArrayLengths = false;
+
+    private Boolean failOnMissingObject = false;
+}
+
+@Data
 public class SchemaComparer {
     private final JsonNode left;
     private final JsonNode right;
     private final Path path;
+    private final SchemaCompareOptions options;
 
     public SchemaComparer(final JsonValue left, final JsonValue right) throws IOException {
+        this(left, right, new SchemaCompareOptions());
+    }
+
+    public SchemaComparer(final JsonValue left, final JsonValue right, SchemaCompareOptions options) throws IOException {
+        this.options = options;
         this.left = getParser(left);
         this.right = getParser(right);
 
         path = new Path();
     }
 
-    protected SchemaComparer(final JsonNode left, final JsonNode right, Path path) {
+    protected SchemaComparer(final JsonNode left, final JsonNode right, Path path, SchemaCompareOptions options) {
         this.left = left;
         this.right = right;
 
         this.path = path;
+        this.options = options;
     }
 
     public List<Difference> differences() throws IOException {
@@ -99,18 +114,30 @@ public class SchemaComparer {
 
         final ArrayList<JsonNode> rightObjects = Lists.newArrayList(rightNode.elements());
 
-        if (leftObjects.size() != rightObjects.size()) {
-            return Arrays.asList(new Difference("", "", path.resolve(), DifferenceType.Missing, "Length: " + leftObjects.size(), String.valueOf(rightObjects.size())));
+        if (leftObjects.size() != rightObjects.size() && options.getFailOnMisMatchedArrayLengths()) {
+            return Arrays.asList(
+                    new Difference("",
+                                   "",
+                                   path.resolve(),
+                                   DifferenceType.Missing,
+                                   "Length: " + leftObjects.size(),
+                                   String.valueOf(rightObjects.size())));
         }
 
-        for (int i = 0; i < leftObjects.size(); i++) {
-            try {
-                final List<Difference> arrayDifferences = new SchemaComparer(leftObjects.get(0), rightObjects.get(0), path).differences();
+        /**
+         * Go through all the right hand objects and compare against the left hand templates
+         */
+        for (int leftHandIndx = 0; leftHandIndx < leftObjects.size(); leftHandIndx++) {
+            for (int rightHandIndx = 0; rightHandIndx < rightObjects.size(); rightHandIndx++) {
+                try {
+                    final List<Difference> arrayDifferences =
+                            new SchemaComparer(leftObjects.get(leftHandIndx), rightObjects.get(rightHandIndx), path, options).differences();
 
-                differences.addAll(arrayDifferences);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
+                    differences.addAll(arrayDifferences);
+                }
+                catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
@@ -145,13 +172,18 @@ public class SchemaComparer {
             JsonNode rightValue = rightParent.get(fieldName);
 
             if (rightValue == null) {
-                return Arrays.asList(
-                        new Difference(fieldName,
-                                       null,
-                                       path.resolve(),
-                                       DifferenceType.Missing,
-                                       leftValue.getNodeType().toString(),
-                                       "none"));
+                if (options.getFailOnMissingObject()) {
+                    return Arrays.asList(
+                            new Difference(fieldName,
+                                           null,
+                                           path.resolve(),
+                                           DifferenceType.Missing,
+                                           leftValue.getNodeType().toString(),
+                                           "none"));
+                }
+                else {
+                    return Collections.emptyList();
+                }
             }
 
             switch (leftValue.getNodeType()) {
@@ -160,7 +192,8 @@ public class SchemaComparer {
                 case BOOLEAN:
                 case MISSING:
                 case NUMBER:
-                    if (leftValue.getNodeType() != rightValue.getNodeType()) {
+                    if (leftValue.getNodeType() != rightValue.getNodeType() &&
+                        rightValue.getNodeType() != JsonNodeType.NULL) {
                         return Arrays.asList(
                                 new Difference(fieldName,
                                                rightValue.textValue(),
@@ -174,6 +207,7 @@ public class SchemaComparer {
                 case OBJECT:
                     return compareObjects(leftValue, rightValue);
                 case NULL:
+                    // don't care
                 case POJO:
                     break;
             }
